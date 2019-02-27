@@ -201,7 +201,7 @@ helpers do
       :from => $appconfig['smtp_from'],
       :to => to,
       :subject => 'Secret Shared via Onetimescret',
-      :body => "#{request.scheme}://#{request.host}/#{secreturi}",
+      :body => "#{request.scheme}://#{request.host}/secret/#{secreturi}",
       :via => :smtp,
       :via_options => {
         :address              => $appconfig['smtp_address'],
@@ -232,7 +232,7 @@ route :get, '/help' do
 end
 
 # generate custom secret
-route :get, :post, '/' do
+route :get, :post, '/secret' do
   if params['storesecret']
     @storedsecret = storesecret(params)
     if params['email'] != ''
@@ -318,7 +318,7 @@ route :get, :post, '/sshkeypair' do
 end
 
 # retrieve a secret
-route :get, :post, '/:shortcode' do
+route :get, :post, '/secret/:shortcode' do
 
   # get the secret from the redis database
   redis_secret = $redis.get "secrets:#{params['shortcode']}"
