@@ -22,6 +22,9 @@ configure do
   # populate appconfig hash via environment vars or read from the .env config file
   $appconfig = Hash.new
 
+  # App config
+  $appconfig['app_name']        = ENV['APP_NAME']        || 'Onetimesecret'
+
   # Redis config
   $appconfig['redis_host']      = ENV['REDIS_HOST']      || nil
   $appconfig['redis_port']      = ENV['REDIS_PORT']      || nil
@@ -325,7 +328,7 @@ route :get, :post, '/:shortcode' do
 
   # if secret not found in redis, halt with error
   if redis_secret == nil
-    @error = "ERROR: Secret already retrieved, Secret Expired or Invalid Secret URI!" 
+    @error = "ERROR: Secret already retrieved, Secret Expired or Invalid Secret URI!"
     halt erb(:layout)
   end
 
@@ -361,7 +364,7 @@ route :get, :post, '/:shortcode' do
       halt erb(:showsecret)
     else
       # else, confirmation email not correct, abort
-      @error = "ERROR: Email address incorrect!" 
+      @error = "ERROR: Email address incorrect!"
       halt erb(:layout)
     end
   else
