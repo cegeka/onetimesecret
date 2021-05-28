@@ -3,3 +3,11 @@
   word-wrap: normal;
   white-space: pre;
 }
+
+.navbar-header .navbar-tagline {
+  width: 100%;
+  text-align: left;
+  font-size: 1.2rem;
+  margin-top: 0px;
+  margin-bottom: 5px;
+}
