@@ -26,6 +26,7 @@ configure do
 
   # App config
   $appconfig['app_name']        = ENV['APP_NAME']        || 'Onetimesecret'
+
   # Base URL
   $appconfig['base_url']        = ENV['BASE_URL'] || nil
 
