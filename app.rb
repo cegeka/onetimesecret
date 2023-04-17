@@ -428,6 +428,11 @@ route :get, :post, '/:shortcode' do
     halt erb(:layout)
   end
 
+  headers \
+    "Cache-Control"   => "no-cache, no-store, must-revalidate",
+    "Pragma"          => "no-cache",
+    "Expires"         => "0"
+
   if params['revealsecret']
     # template 'showsecret' needs this variable so it knows it can reveal the secret
     @revealsecret = true
