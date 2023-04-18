@@ -1,3 +1,5 @@
+require 'rubygems'
+require 'bundler/setup'
 require 'sinatra'
 require 'sinatra/multi_route'
 require 'sinatra/logger'
@@ -10,10 +12,20 @@ require 'dotenv/load'
 require 'openssl'
 require 'pp'
 require 'statsd-ruby'
+require "prometheus/middleware/collector"
+require "prometheus/middleware/exporter"
+
+use Prometheus::Middleware::Collector
+use Prometheus::Middleware::Exporter
 include ERB::Util
 
 ##############################
 # Initialize
+prometheus = Prometheus::Client.registry
+$http_generate_secret = prometheus.counter(:generate_secret, docstring: 'A counter of secrets created')
+$http_retrieve_secret = prometheus.counter(:retrieve_secret, docstring: 'A counter of secrets retrieved')
+$http_expired_secret = prometheus.counter(:expired_secret, docstring: 'A counter of expired secrets retrieved')
+$http_incorrect_mail = prometheus.counter(:incorrect_mail, docstring: 'A counter of incorrect mail while secrets retrieved')
 # Read app config files etc
 
 # begin sinatra configure block
@@ -43,8 +55,8 @@ configure do
   $appconfig['redis_password']  = ENV['REDIS_PASSWORD']  || nil
   $appconfig['redis_secretttl'] = ENV['REDIS_SECRETTTL'] || nil
 
-  $appconfig['encryption_key']  = ENV['ENCRYPTION_KEY']  || nil
-  $appconfig['encryption_auth'] = ENV['ENCRYPTION_AUTH']  || nil
+  $appconfig['encryption_key']  = ENV['ENCRYPTION_KEY']  || 'YouReallyWantToChangeThis!eisShu'
+  $appconfig['encryption_auth'] = ENV['ENCRYPTION_AUTH']  || 'YouReallyWantToChangeThis!veehut'
 
   # secrettypes: customsecret, randomstring, sshkeypair
   $appconfig['secrettype_randomstring_secretlength']    = ENV['SECRETTYPE_RANDOMSTRING_SECRETLENGTH']    || nil
@@ -52,11 +64,11 @@ configure do
   $appconfig['secrettype_randomstring_comment']         = ENV['SECRETTYPE_RANDOMSTRING_COMMENT']         || nil
   $appconfig['secrettype_randomstring_email']           = ENV['SECRETTYPE_RANDOMSTRING_EMAIL']           || nil
 
-  $appconfig['secrettype_sshkeypair_keytype']       = ENV['SECRETTYPE_SSHKEYPAIR_KEYTYPE']       || nil
-  $appconfig['secrettype_sshkeypair_keylength']     = ENV['SECRETTYPE_SSHKEYPAIR_KEYLENGTH']     || nil
+  $appconfig['secrettype_sshkeypair_keytype']       = ENV['SECRETTYPE_SSHKEYPAIR_KEYTYPE']       || 'RSA'
+  $appconfig['secrettype_sshkeypair_keylength']     = ENV['SECRETTYPE_SSHKEYPAIR_KEYLENGTH']     || 4096
   $appconfig['secrettype_sshkeypair_keycomment']    = ENV['SECRETTYPE_SSHKEYPAIR_KEYCOMMENT']    || nil
   $appconfig['secrettype_sshkeypair_keypassphrase'] = ENV['SECRETTYPE_SSHKEYPAIR_KEYPASSPHRASE'] || nil
-  $appconfig['secrettype_sshkeypair_comment']       = ENV['SECRETTYPE_SSHKEYPAIR_COMMENT']       || nil
+  $appconfig['secrettype_sshkeypair_comment']       = ENV['SECRETTYPE_SSHKEYPAIR_COMMENT']       || 'Key created by OneTimeSecret'
   $appconfig['secrettype_sshkeypair_email']         = ENV['SECRETTYPE_SSHKEYPAIR_EMAIL']         || nil
 
   $appconfig['secrettype_customsecret_secret']  = ENV['SECRETTYPE_CUSTOMSECRET_SECRET']  || nil
@@ -237,6 +249,7 @@ helpers do
     $redis.setex "secrets:#{params['secreturi']}", params['ttl'], encrypted_params
 
     # and send out a metric of this event
+    $http_generate_secret.increment
     update_metrics("secretscreated") unless $statsd.nil?
 
     return params
@@ -246,7 +259,7 @@ helpers do
     # the value of #{metricname} can be 'secretscreated' or 'secretsretrieved'
     # this value is used as the metric name sent to statsd
 
-    if metricname == "secretscreated" || "secretsretrieved" || "secretsinvalid"
+    if metricname == "secretscreated" || metricname == "secretsretrieved" || metricname == "secretsinvalid"
       # Increment a counter with 1 to record when a secret is created or retrieved
       $statsd.increment("statsd.OnetimeSecret.#{metricname}")
 
@@ -266,23 +279,28 @@ helpers do
     html_body = ERB.new(File.read("views/email-html-template.erb")).result(context)
     text_body = ERB.new(File.read("views/email-text-template.erb")).result(context)
 
-    Pony.mail({
-      :from        => $appconfig['smtp_from'],
-      :to          => to,
-      :subject     => 'Secret shared via Onetimesecret',
-      :body        => text_body,
-      :html_body   => html_body,
-      :via         => :smtp,
-      :via_options => {
-        :address              => $appconfig['smtp_address'],
-        :port                 => $appconfig['smtp_port'],
-        :domain               => $appconfig['smtp_helo_domain'],
-        :enable_starttls_auto => true,
-        # :user_name      => $appconfig['smtp_username'],
-        # :password       => $appconfig['smtp_password'],
-        # :authentication => :plain, # :plain, :login, :cram_md5, no auth by default
-      }
-    })
+    begin
+      Pony.mail({
+        :from        => $appconfig['smtp_from'],
+        :to          => to,
+        :subject     => 'Secret shared via Onetimescret',
+        :body        => text_body,
+        :html_body   => html_body,
+        :via         => :smtp,
+        :via_options => {
+          :address              => $appconfig['smtp_address'],
+          :port                 => $appconfig['smtp_port'],
+          :domain               => $appconfig['smtp_helo_domain'],
+          :enable_starttls_auto => true,
+          # :user_name      => $appconfig['smtp_username'],
+          # :password       => $appconfig['smtp_password'],
+          # :authentication => :plain, # :plain, :login, :cram_md5, no auth by default
+        }
+      })
+    rescue
+      @error = "ERROR: Issue sending email!"
+      halt erb(:layout)
+    end
 
     logger.info "mail sent to #{to}"
   end
@@ -405,6 +423,7 @@ route :get, :post, '/:shortcode' do
   # if secret not found in redis, halt with error
   if redis_secret == nil
     @error = "ERROR: Secret already retrieved, Secret Expired or Invalid Secret URI!"
+    $http_expired_secret.increment
     update_metrics("secretsinvalid") unless $statsd.nil?
     halt erb(:layout)
   end
@@ -413,7 +432,7 @@ route :get, :post, '/:shortcode' do
     "Cache-Control"   => "no-cache, no-store, must-revalidate",
     "Pragma"          => "no-cache",
     "Expires"         => "0"
-  
+
   if params['revealsecret']
     # template 'showsecret' needs this variable so it knows it can reveal the secret
     @revealsecret = true
@@ -428,6 +447,7 @@ route :get, :post, '/:shortcode' do
     # if the secret does not contain email, show secret and halt
     if @secret['email'] == ''
       $redis.del "secrets:#{params[:shortcode]}"
+      $http_retrieve_secret.increment
       update_metrics("secretsretrieved") unless $statsd.nil?
       if params['format'] == "json"
         json(JSON.parse(redis_secret.gsub('=>', ':')))
@@ -444,10 +464,12 @@ route :get, :post, '/:shortcode' do
     # if confirmation email submitted and email matches with secret email, show secret
     if params['confirmemail'] and params['email'].downcase == @secret['email'].downcase
       $redis.del "secrets:#{params[:shortcode]}"
+      $http_retrieve_secret.increment
       update_metrics("secretsretrieved") unless $statsd.nil?
       halt erb(:showsecret)
     else
       # else, confirmation email not correct, abort
+      $http_incorrect_mail.increment
       @error = "ERROR: Email address incorrect!"
       halt erb(:layout)
     end
