@@ -1,6 +1,4 @@
 require './app.rb'
-require 'prometheus/middleware/collector'
-require 'prometheus/middleware/exporter'
 
 rackapp = Rack::Builder.app do
   use Prometheus::Middleware::Collector
