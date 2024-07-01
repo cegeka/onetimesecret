@@ -21,11 +21,11 @@ include ERB::Util
 
 ##############################
 # Initialize
-prometheus = Prometheus::Client.registry
-$http_generate_secret = prometheus.counter(:generate_secret, docstring: 'A counter of secrets created')
-$http_retrieve_secret = prometheus.counter(:retrieve_secret, docstring: 'A counter of secrets retrieved')
-$http_expired_secret = prometheus.counter(:expired_secret, docstring: 'A counter of expired secrets retrieved')
-$http_incorrect_mail = prometheus.counter(:incorrect_mail, docstring: 'A counter of incorrect mail while secrets retrieved')
+#prometheus = Prometheus::Client.registry
+#$http_generate_secret = prometheus.counter(:generate_secret, docstring: 'A counter of secrets created')
+#$http_retrieve_secret = prometheus.counter(:retrieve_secret, docstring: 'A counter of secrets retrieved')
+#$http_expired_secret = prometheus.counter(:expired_secret, docstring: 'A counter of expired secrets retrieved')
+#$http_incorrect_mail = prometheus.counter(:incorrect_mail, docstring: 'A counter of incorrect mail while secrets retrieved')
 # Read app config files etc
 
 # begin sinatra configure block
