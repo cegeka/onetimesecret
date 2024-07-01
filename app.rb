@@ -19,10 +19,6 @@ require 'rack/auth/basic'
 use Prometheus::Middleware::Collector
 use Prometheus::Middleware::Exporter
 
-use Rack::Auth::Basic, "Restricted Area" do |username, password|
-  username == ENV['METRICS_USERNAME'] && password == ENV['METRICS_PASSWORD']
-end
-
 include ERB::Util
 
 ##############################
@@ -484,4 +480,22 @@ route :get, :post, '/:shortcode' do
     @shortcode = params['shortcode']
     halt erb(:showsecret)
   end
+end
+
+# apply basic authentication to /metrics endpoint
+before '/metrics' do
+  protected!
+end
+
+# define protected method for basic authentication
+def protected!
+  return if authorized?
+  headers['WWW-Authenticate'] = 'Basic realm="Restricted Area"'
+  halt 401, "Not authorized\n"
+end
+
+# define authorization method
+def authorized?
+  @auth ||=  Rack::Auth::Basic::Request.new(request.env)
+  @auth.provided? && @auth.basic? && @auth.credentials && @auth.credentials == ['username', 'password']
 end
