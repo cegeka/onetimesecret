@@ -14,9 +14,15 @@ require 'pp'
 require 'statsd-ruby'
 require "prometheus/middleware/collector"
 require "prometheus/middleware/exporter"
+require 'rack/auth/basic'
 
 use Prometheus::Middleware::Collector
 use Prometheus::Middleware::Exporter
+
+use Rack::Auth::Basic, "Restricted Area" do |username, password|
+  username == ENV['METRICS_USERNAME'] && password == ENV['METRICS_PASSWORD']
+end
+
 include ERB::Util
 
 ##############################
