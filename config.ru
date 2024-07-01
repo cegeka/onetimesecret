@@ -1,5 +1,5 @@
 require './app.rb'
-require './auth_basic_middleware'
+require './basic_auth_metrics.rb'
 
 run Sinatra::Application
 
