@@ -18,8 +18,9 @@ require 'rack/auth/basic'
 
 use Prometheus::Middleware::Collector
 
-use Prometheus::Middleware::Exporter, path: '/metrics' do
-    authorized?
+use Rack::Auth::Basic, "Restricted Area" do |username, password|
+  use Prometheus::Middleware::Exporter
+  username == 'admin' && password == 'supersecret'
 end
 
 include ERB::Util
