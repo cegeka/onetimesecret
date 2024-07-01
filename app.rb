@@ -481,24 +481,3 @@ route :get, :post, '/:shortcode' do
     halt erb(:showsecret)
   end
 end
-
-class MetricsAuth
-  def initialize(app)
-    @app = app
-  end
-
-  def call(env)
-    if env['PATH_INFO'] == '/metrics'
-      auth = Rack::Auth::Basic.new(@app) do |username, password|
-        # Replace with your actual authentication logic
-        username == 'admin' && password == 'password'
-      end
-      auth.call(env)
-    else
-      @app.call(env)
-    end
-  end
-end
-
-use MetricsAuth
-
