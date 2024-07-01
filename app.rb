@@ -17,7 +17,10 @@ require "prometheus/middleware/exporter"
 require 'rack/auth/basic'
 
 use Prometheus::Middleware::Collector
-use Prometheus::Middleware::Exporter
+
+use Prometheus::Middleware::Exporter, path: '/metrics' do
+    authorized?
+end
 
 include ERB::Util
 
