@@ -14,17 +14,9 @@ require 'pp'
 require 'statsd-ruby'
 require "prometheus/middleware/collector"
 require "prometheus/middleware/exporter"
-require 'rack/auth/basic'
-
-use Rack::Auth::Basic, "Restricted Area" do |username, password|
-  username == 'admin' && password == 'supersecret'
-end
 
 use Prometheus::Middleware::Collector
-
-use Prometheus::Middleware::Exporter, path: '/metrics' do
-  authorized?
-end
+#use Prometheus::Middleware::Exporter
 
 include ERB::Util
 
