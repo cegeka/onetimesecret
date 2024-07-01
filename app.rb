@@ -482,27 +482,15 @@ route :get, :post, '/:shortcode' do
   end
 end
 
-# apply basic authentication to /metrics endpoint
-before '/metrics' do
-  protected!
+use Rack::Auth::Basic, "Restricted Area" do |username, password|
+  # Define your authentication logic here
+  # For example, you could validate against hardcoded credentials
+  username == 'admin' && password == 'password'
 end
 
-# define protected method for basic authentication
-def protected!
-  return if authorized?
-  headers['WWW-Authenticate'] = 'Basic realm="Restricted Area"'
-  halt 401, "Not authorized\n"
+# Route to handle requests to the /metrics endpoint
+get '/metrics' do
+  # Return your Prometheus metrics here
+  content_type Prometheus::Client::Formats::Text::TYPE
+  prometheus.metrics
 end
-
-# define authorization method
-def authorized?
-  @auth ||=  Rack::Auth::Basic::Request.new(request.env)
-  @auth.provided? && @auth.basic? && @auth.credentials && @auth.credentials == ['username', 'password']
-end
-
-get '/' do
-  redirect_to_base_url()
-
-  erb :index
-end
-
