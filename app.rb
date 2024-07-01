@@ -12,8 +12,8 @@ require 'dotenv/load'
 require 'openssl'
 require 'pp'
 require 'statsd-ruby'
-#require "prometheus/middleware/collector"
-#require "prometheus/middleware/exporter"
+require "prometheus/middleware/collector"
+require "prometheus/middleware/exporter"
 
 #use Prometheus::Middleware::Collector
 #use Prometheus::Middleware::Exporter
