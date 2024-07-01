@@ -13,6 +13,6 @@ rackapp = Rack::Builder.app do
     use Prometheus::Middleware::Exporter, path: ''
     run ->(_) { [500, { 'Content-Type' => 'text/html' }, ['crowdAI metrics endpoint is unreachable!']] }
   end
+  run Sinatra::Application
 end
-
-run Sinatra::Application
+run rackapp
