@@ -499,3 +499,10 @@ def authorized?
   @auth ||=  Rack::Auth::Basic::Request.new(request.env)
   @auth.provided? && @auth.basic? && @auth.credentials && @auth.credentials == ['username', 'password']
 end
+
+get '/' do
+  redirect_to_base_url()
+
+  erb :index
+end
+
