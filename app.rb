@@ -482,15 +482,23 @@ route :get, :post, '/:shortcode' do
   end
 end
 
-use Rack::Auth::Basic, "Restricted Area" do |username, password|
-  # Define your authentication logic here
-  # For example, you could validate against hardcoded credentials
-  username == 'admin' && password == 'password'
+class MetricsAuth
+  def initialize(app)
+    @app = app
+  end
+
+  def call(env)
+    if env['PATH_INFO'] == '/metrics'
+      auth = Rack::Auth::Basic.new(@app) do |username, password|
+        # Replace with your actual authentication logic
+        username == 'admin' && password == 'password'
+      end
+      auth.call(env)
+    else
+      @app.call(env)
+    end
+  end
 end
 
-# Route to handle requests to the /metrics endpoint
-get '/metrics' do
-  # Return your Prometheus metrics here
-  content_type Prometheus::Client::Formats::Text::TYPE
-  prometheus.metrics
-end
+use MetricsAuth
+
