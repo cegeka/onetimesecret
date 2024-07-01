@@ -46,8 +46,8 @@ configure do
   $appconfig['html_email_logo'] = ENV['HTML_EMAIL_LOGO'] || nil
 
   # Statsd config
-  $appconfig['statsd_host']     = ENV['STATSD_HOST']     || nil
-  $appconfig['statsd_port']     = ENV['STATSD_PORT']     || nil
+  #$appconfig['statsd_host']     = ENV['STATSD_HOST']     || nil
+  #$appconfig['statsd_port']     = ENV['STATSD_PORT']     || nil
 
   # Redis config
   $appconfig['redis_host']      = ENV['REDIS_HOST']      || nil
@@ -98,10 +98,10 @@ configure do
   end
 
   # create connection to statsd metrics backend
-  unless $appconfig['statsd_host'].nil?
-    $statsd = Statsd.new("#{$appconfig['statsd_host']}",$appconfig['statsd_port'])
-  end
-end
+  #unless $appconfig['statsd_host'].nil?
+    #$statsd = Statsd.new("#{$appconfig['statsd_host']}",$appconfig['statsd_port'])
+  #end
+#end
 
 ############################
 # Start Function Definitions
