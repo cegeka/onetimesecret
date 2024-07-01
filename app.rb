@@ -101,7 +101,7 @@ configure do
   #unless $appconfig['statsd_host'].nil?
     #$statsd = Statsd.new("#{$appconfig['statsd_host']}",$appconfig['statsd_port'])
   #end
-#end
+end
 
 ############################
 # Start Function Definitions
