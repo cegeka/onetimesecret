@@ -16,7 +16,10 @@ require "prometheus/middleware/collector"
 require "prometheus/middleware/exporter"
 
 use Prometheus::Middleware::Collector
-use Prometheus::Middleware::Exporter
+
+#Disable metrics since nobody is using those and they are exposed via the internet. I also tried adding authentication instead of disabling but that doesn't work.
+#use Prometheus::Middleware::Exporter
+
 include ERB::Util
 
 ##############################
