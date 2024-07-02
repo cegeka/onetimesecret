@@ -14,8 +14,8 @@
       <td>Secret Type:</td>
       <td>
         <select name="secretiscomplex" class="form-control" style="width: 100%" >
-          <option value="false" <% if @secret['secretiscomplex'] == "false" %>selected<% end %>>letters and numbers</option>
-          <option value="true"  <% if @secret['secretiscomplex'] == "true"  %>selected<% end %>>letters and numbers + other characters</option>
+          <option value="false" <% if @secret['secretiscomplex'] == "false" %>selected<% end %>>letters and/or numbers</option>
+          <option value="true"  <% if @secret['secretiscomplex'] == "true"  %>selected<% end %>>letters and/or numbers + other characters</option>
         </select>
       </td>
     </tr>
