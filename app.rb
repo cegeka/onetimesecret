@@ -283,7 +283,7 @@ helpers do
       Pony.mail({
         :from        => $appconfig['smtp_from'],
         :to          => to,
-        :subject     => 'Secret shared via Onetimescret',
+        :subject     => 'Secret shared via Onetimesecret',
         :body        => text_body,
         :html_body   => html_body,
         :via         => :smtp,
